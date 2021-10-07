@@ -8,7 +8,7 @@ import com.movies.android.data.models.Movie
 import com.movies.android.databinding.ItemMovieBinding
 
 class MovieViewHolder(private val itemMovieBinding: ItemMovieBinding) :
-    RecyclerView.ViewHolder(itemMovieBinding.root) {
+    BaseViewHolder(itemMovieBinding.root) {
 
     fun bind(movie: Movie) {
         Glide.with(itemMovieBinding.root.context)

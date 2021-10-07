@@ -101,22 +101,22 @@ class MainActivity : AppCompatActivity() {
         linearLayoutManager = LinearLayoutManager(this)
         binding.recyclerMovies.apply {
             adapter = moviesAdapter
-            layoutManager = gridLayoutManager
+            layoutManager = linearLayoutManager
             itemAnimator = null
         }
-        binding.recyclerMovies.addOnScrollListener(recyclerViewOnScrollListener)
-//        binding.recyclerMovies.addOnScrollListener(object : PaginationListener(linearLayoutManager) {
-//            override fun loadMoreItems() {
-//                viewModel.getNextPage()
-//            }
-//
-//            override val isLastPage: Boolean
-//                get() = viewModel.isLastPage
-//
-//            override val isLoading: Boolean
-//                get() = viewModel.isLoading
-//
-//        })
+        binding.recyclerMovies.addOnScrollListener(object : PaginationListener(linearLayoutManager) {
+            override fun loadMoreItems() {
+                viewModel.getNextPage()
+            }
+
+            override val isLastPage: Boolean
+                get() = viewModel.isLastPage
+
+            override val isLoading: Boolean
+                get() = viewModel.isLoading
+
+        })
+//        binding.recyclerMovies.addOnScrollListener(recyclerViewOnScrollListener)
     }
 
     private val recyclerViewOnScrollListener: RecyclerView.OnScrollListener =
@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity() {
                 val totalItemCount: Int = gridLayoutManager.itemCount
                 val firstVisibleItemPosition: Int = gridLayoutManager.findFirstVisibleItemPosition()
                 if (!viewModel.isLoading && !viewModel.isLastPage) {
-                    if (visibleItemCount + firstVisibleItemPosition >= totalItemCount && firstVisibleItemPosition >= 0 && totalItemCount >= PAGE_SIZE) {
+                    if (visibleItemCount + firstVisibleItemPosition >= totalItemCount && firstVisibleItemPosition >= 0 && totalItemCount >= 10) {
                         viewModel.getNextPage()
                     }
                 }
@@ -145,19 +145,20 @@ class MainActivity : AppCompatActivity() {
             }
             when (response.responseStatus) {
                 ResponseStatus.SUCCESS -> {
+                    moviesAdapter.hideLoading()
                     moviesAdapter.addAll(response.data?.search.orEmpty())
                 }
                 ResponseStatus.ERROR -> {
-
+                    moviesAdapter.hideLoading()
                 }
                 ResponseStatus.OFFLINE_ERROR -> {
-
+                    moviesAdapter.hideLoading()
                 }
                 ResponseStatus.EMPTY -> {
-
+                    moviesAdapter.hideLoading()
                 }
                 ResponseStatus.LOADING -> {
-
+                    moviesAdapter.showLoading()
                 }
             }
         }
