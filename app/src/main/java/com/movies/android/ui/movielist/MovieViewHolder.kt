@@ -15,7 +15,7 @@ class MovieViewHolder(private val itemMovieBinding: ItemMovieBinding) :
             .load(movie.poster)
             .error(R.drawable.img_placeholder_movie)
             .placeholder(R.drawable.img_placeholder_movie)
-            .apply(RequestOptions().centerCrop().encodeQuality(0))
+            .apply(RequestOptions().fitCenter())
             .into(itemMovieBinding.imgMovie)
 
     }

@@ -1,17 +1,17 @@
 package com.movies.android.ui.movielist
 
-import androidx.appcompat.app.AppCompatActivity
+import android.nfc.tech.MifareUltralight
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.movies.android.R
-import com.movies.android.data.models.Movie
 import com.movies.android.data.models.ResponseStatus
 import com.movies.android.databinding.ActivityMainBinding
 import com.movies.android.utils.getQueryTextChangeStateFlow
@@ -19,6 +19,10 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import android.nfc.tech.MifareUltralight.PAGE_SIZE
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.movies.android.utils.PaginationListener
+
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -28,6 +32,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var moviesAdapter: MoviesAdapter
     private lateinit var searchView: SearchView
     private lateinit var gridLayoutManager: GridLayoutManager
+    private lateinit var linearLayoutManager: LinearLayoutManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,7 +40,6 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this).get(MovieViewModel::class.java)
         setObservers()
         setUpRecycler()
-        viewModel.getMovies(viewModel.moviesFilter)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -47,7 +51,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_sort) {
-            gridLayoutManager.reverseLayout = !gridLayoutManager.reverseLayout
+
         }
         return super.onOptionsItemSelected(item)
     }
@@ -66,7 +70,12 @@ class MainActivity : AppCompatActivity() {
                 .debounce(1000)
                 .filter { query ->
                     if (query.isEmpty()) {
-                        searchView.setQuery("", false)
+                        if (!searchView.isIconified) {
+                            searchView.setQuery("", false)
+                            viewModel.moviesFilter =
+                                viewModel.moviesFilter.copy(keyword = "App", page = 1)
+                            makeApiCall()
+                        }
                         return@filter false
                     } else {
                         return@filter true
@@ -75,29 +84,67 @@ class MainActivity : AppCompatActivity() {
                 .distinctUntilChanged()
                 .flowOn(Dispatchers.Default)
                 .collect { result ->
-                    viewModel.getMovies(viewModel.moviesFilter.copy(keyword = result))
+                    viewModel.moviesFilter = viewModel.moviesFilter.copy(keyword = result, page = 1)
+                    makeApiCall()
                 }
         }
+    }
+
+    private fun makeApiCall() {
+        viewModel.getMovies(viewModel.moviesFilter)
     }
 
     private fun setUpRecycler() {
         moviesAdapter = MoviesAdapter()
         gridLayoutManager =
-            GridLayoutManager(this@MainActivity, 3, GridLayoutManager.VERTICAL, false)
+            GridLayoutManager(this@MainActivity, 2, GridLayoutManager.VERTICAL, false)
+        linearLayoutManager = LinearLayoutManager(this)
         binding.recyclerMovies.apply {
             adapter = moviesAdapter
             layoutManager = gridLayoutManager
-
+            itemAnimator = null
         }
+        binding.recyclerMovies.addOnScrollListener(recyclerViewOnScrollListener)
+//        binding.recyclerMovies.addOnScrollListener(object : PaginationListener(linearLayoutManager) {
+//            override fun loadMoreItems() {
+//                viewModel.getNextPage()
+//            }
+//
+//            override val isLastPage: Boolean
+//                get() = viewModel.isLastPage
+//
+//            override val isLoading: Boolean
+//                get() = viewModel.isLoading
+//
+//        })
     }
+
+    private val recyclerViewOnScrollListener: RecyclerView.OnScrollListener =
+        object : RecyclerView.OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                super.onScrollStateChanged(recyclerView, newState)
+            }
+
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val visibleItemCount: Int = gridLayoutManager.childCount
+                val totalItemCount: Int = gridLayoutManager.itemCount
+                val firstVisibleItemPosition: Int = gridLayoutManager.findFirstVisibleItemPosition()
+                if (!viewModel.isLoading && !viewModel.isLastPage) {
+                    if (visibleItemCount + firstVisibleItemPosition >= totalItemCount && firstVisibleItemPosition >= 0 && totalItemCount >= PAGE_SIZE) {
+                        viewModel.getNextPage()
+                    }
+                }
+            }
+        }
 
     private fun setObservers() {
         viewModel.moviesList.observe(this) { response ->
+            if (viewModel.currentPage == 1) {
+                moviesAdapter.resetAdapter()
+            }
             when (response.responseStatus) {
                 ResponseStatus.SUCCESS -> {
-                    if (!searchView.isIconified) {
-                        moviesAdapter.resetAdapter()
-                    }
                     moviesAdapter.addAll(response.data?.search.orEmpty())
                 }
                 ResponseStatus.ERROR -> {
