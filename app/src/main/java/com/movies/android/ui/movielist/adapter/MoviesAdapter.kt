@@ -1,13 +1,18 @@
-package com.movies.android.ui.movielist
+package com.movies.android.ui.movielist.adapter
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import androidx.paging.PagingDataAdapter
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.movies.android.R
 import com.movies.android.data.models.Movie
+import com.movies.android.ui.movielist.BaseViewHolder
+import com.movies.android.ui.movielist.MovieViewHolder
+import com.movies.android.ui.movielist.ProgressViewHolder
 
-class MoviesAdapter : RecyclerView.Adapter<BaseViewHolder>() {
+class MoviesAdapter : PagingDataAdapter<Movie, BaseViewHolder>(MoviesDiffUtil) {
 
     private val movies = mutableListOf<Movie>()
     private var showLoading = false
@@ -73,5 +78,15 @@ class MoviesAdapter : RecyclerView.Adapter<BaseViewHolder>() {
     enum class ViewType(val type: Int) {
         LOADING(100),
         NORMAL(101)
+    }
+
+    object MoviesDiffUtil : DiffUtil.ItemCallback<Movie>() {
+        override fun areItemsTheSame(oldItem: Movie, newItem: Movie): Boolean {
+            return oldItem.imdbID == newItem.imdbID
+        }
+
+        override fun areContentsTheSame(oldItem: Movie, newItem: Movie): Boolean {
+            return oldItem == newItem
+        }
     }
 }

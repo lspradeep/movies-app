@@ -1,6 +1,5 @@
 package com.movies.android.ui.movielist
 
-import android.nfc.tech.MifareUltralight
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -19,8 +18,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import android.nfc.tech.MifareUltralight.PAGE_SIZE
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.movies.android.ui.movielist.adapter.MoviesAdapter
 import com.movies.android.utils.PaginationListener
 
 
