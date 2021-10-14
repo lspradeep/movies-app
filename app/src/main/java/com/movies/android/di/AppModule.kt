@@ -2,13 +2,9 @@ package com.movies.android.di
 
 import com.movies.android.BuildConfig
 import com.movies.android.api.MoviesService
-import com.movies.android.repo.MovieRepo
-import com.movies.android.repo.MovieRepoImpl
 import com.movies.android.utils.Constants.BASE_URL
-import dagger.Binds
 import dagger.Module
 import dagger.Provides
-import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
