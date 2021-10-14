@@ -17,15 +17,12 @@ class MoviePagingSource(
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Movie> {
         val position = params.key ?: MOVIE_STARTING_PAGE_INDEX
-        val apiQuery = keyword
         return try {
-            val response = moviesService.getMovies(API_KEY, apiQuery, position)
+            val response = moviesService.getMovies(API_KEY, keyword, position)
             val movies = response?.movies.orEmpty()
             val nextKey = if (movies.isEmpty()) {
                 null
             } else {
-                // initial load size = 3 * NETWORK_PAGE_SIZE
-                // ensure we're not requesting duplicating items, at the 2nd request
                 position + 1
             }
 

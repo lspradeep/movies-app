@@ -57,13 +57,6 @@ class MainActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_sort) {
-
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
     override fun onBackPressed() {
         if (!searchView.isIconified) {
             searchView.isIconified = true;
@@ -77,20 +70,15 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             searchView.getQueryTextChangeStateFlow()
                 .debounce(1000)
-//                .filter { query ->
-//                    if (query.isEmpty()) {
-//                        if (!searchView.isIconified) {
-//                            search(query)
-//                        }
-//                        return@filter true
-//                    } else {
-//                        return@filter true
-//                    }
-//                }
                 .distinctUntilChanged()
                 .flowOn(Dispatchers.Default)
-                .collect { result ->
-                    search(result)
+                .collect { query ->
+                    if (query.isEmpty() || searchView.isIconified) {
+                        search("Android")
+                    } else {
+                        search(query)
+                    }
+
                 }
         }
     }
@@ -100,11 +88,6 @@ class MainActivity : AppCompatActivity() {
         searchJob = lifecycleScope.launch {
             viewModel.getMovies(query).collectLatest {
                 moviesAdapter.submitData(it)
-//                gridLayoutManager.smoothScrollToPosition(
-//                    binding.recyclerMovies,
-//                    RecyclerView.State(),
-//                    0
-//                )
             }
         }
     }
